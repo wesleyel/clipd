@@ -16,8 +16,7 @@ brew services start clipd
 Do not start the service with `sudo` — the pasteboard is per-user. Logs land
 in `$(brew --prefix)/var/log/clipd.log`.
 
-To require a token, either run in the foreground with `--token`, or add
-`CLIPD_TOKEN` to the LaunchAgent Homebrew generates.
+To require a token, run with `--token` or set `CLIPD_TOKEN`.
 
 ## Build
 
@@ -101,18 +100,8 @@ it skips the transcode.
 
 ## Autostart
 
-Homebrew's service starts it at login:
-
 ```sh
 brew services start clipd
-```
-
-If you previously copied `com.wesley.clipd.plist` into `~/Library/LaunchAgents`,
-unload that one first so the two do not fight for the port:
-
-```sh
-launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.wesley.clipd.plist
-rm -f ~/Library/LaunchAgents/com.wesley.clipd.plist
 ```
 
 ## Notes
