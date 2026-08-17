@@ -57,7 +57,9 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ steps.meta.outputs.version }}"
-          name="$BIN-$version-macos-universal"
+          # Filename must be $BIN-$version.tar.gz so Renovate's Homebrew
+          # manager can find the release asset instead of the source archive.
+          name="$BIN-$version"
 
           mkdir -p "pkg/$name"
           lipo -create -output "pkg/$name/$BIN" \
