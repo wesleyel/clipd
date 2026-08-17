@@ -20,11 +20,6 @@ jobs:
   build:
     # macOS only: the artifact is macOS-specific and lipo is needed for the universal binary.
     runs-on: macos-14
-    outputs:
-      version: ${{ steps.meta.outputs.version }}
-      tag: ${{ steps.meta.outputs.tag }}
-      asset: ${{ steps.package.outputs.asset }}
-      sha256: ${{ steps.package.outputs.sha256 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -90,43 +85,3 @@ jobs:
             --generate-notes \
             "$asset" "$asset.sha256" \
             || gh release upload "$tag" "$asset" "$asset.sha256" --clobber
-
-  tap:
-    needs: build
-    runs-on: ubuntu-latest
-    # Leave the tap alone for prereleases such as v0.2.0-rc1.
-    if: ${{ !contains(needs.build.outputs.tag, '-') }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check out the tap
-        uses: actions/checkout@v4
-        with:
-          repository: wesleyel/homebrew-tap
-          token: ${{ secrets.TAP_GITHUB_TOKEN }}
-          path: tap
-
-      - name: Render the formula
-        run: |
-          set -euo pipefail
-          mkdir -p tap/Formula
-          sed \
-            -e "s|@VERSION@|${{ needs.build.outputs.version }}|g" \
-            -e "s|@SHA256@|${{ needs.build.outputs.sha256 }}|g" \
-            packaging/homebrew/clipd.rb.tmpl \
-            > tap/Formula/clipd.rb
-          cat tap/Formula/clipd.rb
-
-      - name: Commit
-        working-directory: tap
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Formula/clipd.rb
-          if git diff --cached --quiet; then
-            echo "formula unchanged, nothing to do"
-            exit 0
-          fi
-          git commit -m "clipd ${{ needs.build.outputs.version }}"
-          git push
