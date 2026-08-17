@@ -1,0 +1,22 @@
+[package]
+name = "clipd"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+arboard = "3.6.1"
+axum = { version = "0.8.9", features = ["multipart"] }
+clap = { version = "4.6.6", features = ["derive", "env"] }
+image = { version = "0.25.10", default-features = false, features = [
+    "png",
+    "jpeg",
+    "gif",
+    "bmp",
+    "tiff",
+    "webp",
+] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_urlencoded = "0.7.1"
+tokio = { version = "1.53.1", features = ["rt-multi-thread", "macros", "signal", "sync", "net"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
