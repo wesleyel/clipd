@@ -2,6 +2,9 @@
 name = "clipd"
 version = "0.1.0"
 edition = "2024"
+description = "HTTP bridge to the macOS pasteboard"
+license = "MIT"
+repository = "https://github.com/wesleyel/clipd"
 
 [dependencies]
 arboard = "3.6.1"

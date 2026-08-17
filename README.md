@@ -6,6 +6,19 @@ LAN pushes **text or images** into the Mac's clipboard with one share-sheet tap.
 Replaces the usual `set_clipboard?text=` one-liner, with the sharp edges filed
 off: image support, HEIC from the iPhone camera, a size limit, and a token.
 
+## Install
+
+```bash
+brew install wesleyel/tap/clipd
+brew services start clipd
+```
+
+Do not start the service with `sudo` — the pasteboard is per-user. Logs land
+in `$(brew --prefix)/var/log/clipd.log`.
+
+To require a token, either run in the foreground with `--token`, or add
+`CLIPD_TOKEN` to the LaunchAgent Homebrew generates.
+
 ## Build
 
 ```sh
@@ -88,15 +101,19 @@ it skips the transcode.
 
 ## Autostart
 
-`launchd/com.wesley.clipd.plist` runs it at login. Edit the binary path and
-token, then:
+Homebrew's service starts it at login:
 
 ```sh
-cp launchd/com.wesley.clipd.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.wesley.clipd.plist
+brew services start clipd
 ```
 
-Logs land in `/tmp/clipd.log`.
+If you previously copied `com.wesley.clipd.plist` into `~/Library/LaunchAgents`,
+unload that one first so the two do not fight for the port:
+
+```sh
+launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.wesley.clipd.plist
+rm -f ~/Library/LaunchAgents/com.wesley.clipd.plist
+```
 
 ## Notes
 
