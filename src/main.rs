@@ -5,7 +5,7 @@ mod clipboard;
 mod imaging;
 mod routes;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv6Addr, SocketAddr};
 use std::sync::Arc;
 
 use clap::Parser;
@@ -17,8 +17,11 @@ use crate::routes::AppState;
 #[derive(Parser)]
 #[command(version, about)]
 struct Cli {
-    /// Address to bind. Defaults to every interface so the phone can reach it.
-    #[arg(long, default_value_t = IpAddr::V4(Ipv4Addr::UNSPECIFIED))]
+    /// Address to bind. Defaults to `::`, which on macOS accepts IPv4 too —
+    /// a phone resolving the Mac's `.local` name is handed AAAA records first,
+    /// so an IPv4-only listener refuses the connection before the server ever
+    /// sees it.
+    #[arg(long, env = "CLIPD_BIND", default_value_t = IpAddr::V6(Ipv6Addr::UNSPECIFIED))]
     bind: IpAddr,
 
     #[arg(long, default_value_t = 14756)]
@@ -60,7 +63,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = routes::router(state, cli.max_body_mb * 1024 * 1024);
     let addr = SocketAddr::new(cli.bind, cli.port);
     let listener = tokio::net::TcpListener::bind(addr).await?;
-    tracing::info!("clipd listening on http://{addr}");
+    // Report what the socket actually bound, not what was asked for: an
+    // `[::]` line is the evidence that IPv4 clients are covered too.
+    tracing::info!("clipd listening on http://{}", listener.local_addr()?);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown())

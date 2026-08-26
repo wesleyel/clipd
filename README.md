@@ -28,14 +28,14 @@ cargo build --release
 ## Run
 
 ```sh
-clipd                                  # 0.0.0.0:14756, no auth
+clipd                                  # [::]:14756 (IPv4 too), no auth
 clipd --token s3cret --notify          # require a token, show a banner on each write
 clipd --bind 127.0.0.1 --port 8080     # loopback only
 ```
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--bind` | `0.0.0.0` | Listen address |
+| `--bind` | `::` | Listen address; also read from `$CLIPD_BIND`. `::` covers IPv4 as well |
 | `--port` | `14756` | Listen port |
 | `--token` | *(unset)* | Shared secret; also read from `$CLIPD_TOKEN` |
 | `--max-body-mb` | `32` | Reject larger bodies with 413 |
@@ -108,9 +108,13 @@ brew services start clipd
 
 - The pasteboard survives the process exiting — macOS's pasteboard server owns
   the data, unlike X11.
-- Set a `--token` if you bind to `0.0.0.0`. Without one, anyone who can reach
+- Set a `--token` if you bind to every interface. Without one, anyone who can reach
   the port can read and write your clipboard, and it's plain HTTP, so treat it
   as a trusted-LAN tool only.
 - iOS asks for Local Network permission on the first run; denying it makes
   requests fail silently.
 - Use an mDNS name (`mac.local`) rather than a DHCP address that will change.
+- Bind dual-stack, which is the default. An mDNS name resolves to the Mac's
+  AAAA records before its A record, so an IPv4-only listener gets a connection
+  refused on any LAN carrying IPv6 — and because the refusal happens at the TCP
+  layer, nothing appears in the log. It looks exactly like a dead service.
