@@ -1,0 +1,64 @@
+# Release: run by .github/workflows/release.yml on a v* tag.
+# Builds macOS arm64 and x86_64 binaries, publishes the GitHub release, and commits
+# Formula/clipd.rb to wesleyel/homebrew-tap.
+version: 2
+
+project_name: clipd
+
+builds:
+  - builder: rust
+    command: build
+    flags:
+      - --release
+      - --locked
+    targets:
+      - aarch64-apple-darwin
+      - x86_64-apple-darwin
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}-{{ .Version }}-macos-{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: SHA256SUMS
+
+changelog:
+  use: github-native
+
+brews:
+  - name: clipd
+    repository:
+      owner: wesleyel
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    commit_msg_template: "clipd {{ .Tag }}"
+    homepage: https://github.com/wesleyel/clipd
+    description: HTTP bridge to the macOS pasteboard
+    license: MIT
+    install: |
+      bin.install "clipd"
+      doc.install "README.md"
+    service: |
+      run [opt_bin/"clipd", "--notify"]
+      environment_variables PATH: std_service_path_env
+      keep_alive true
+      log_path var/"log/clipd.log"
+      error_log_path var/"log/clipd.log"
+    caveats: |
+      clipd listens on 0.0.0.0:14756. Without a token, anyone on the LAN can
+      read and write the pasteboard. Set CLIPD_TOKEN if you bind beyond loopback.
+
+      The Homebrew service runs with --notify and no token. Do not start it with
+      sudo — the pasteboard is per-user.
+
+        brew services start clipd
+
+      To require a token, set CLIPD_TOKEN or run in the foreground:
+
+        clipd --token s3cret --notify
+    test: |
+      assert_match version.to_s, shell_output("#{bin}/clipd --version")
